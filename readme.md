@@ -1,7 +1,8 @@
-###Pré-requisitos
+### Pré-requisitos
+
 Para executar o projeto, será necessário instalar o Node 18.15.0+ (usado na palestra)
 
-###Executando o projeto
+### Executando o projeto
 
 ```bash
 # Entrar na pasta do grafo desejado e executar o comando
