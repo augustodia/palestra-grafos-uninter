@@ -12,18 +12,6 @@ export class GrafoComPeso<V> extends Grafo<V> {
   }
 
   // Adiciona uma nova aresta ao grafo com pesos
-  protected adicionarArestaUsandoIndicesComPesos(
-    indexDe: number,
-    indexPara: number,
-    peso: number
-  ): void {
-    // Adiciona a nova aresta ao vetor de arestas. Usa o método da classe pai
-    this.adicionarNovaAresta(
-      new ArestaComPeso({ de: indexDe, para: indexPara, peso })
-    );
-  }
-
-  // Adiciona uma nova aresta ao grafo com pesos
   adicionarArestaUsandoVerticesComPeso(de: V, para: V, peso: number): void {
     const i = this.vertices.indexOf(de);
     const j = this.vertices.indexOf(para);
@@ -33,6 +21,18 @@ export class GrafoComPeso<V> extends Grafo<V> {
     }
 
     this.adicionarArestaUsandoIndicesComPesos(i, j, peso);
+  }
+
+  // Adiciona uma nova aresta ao grafo com pesos
+  protected adicionarArestaUsandoIndicesComPesos(
+    indexDe: number,
+    indexPara: number,
+    peso: number
+  ): void {
+    // Adiciona a nova aresta ao vetor de arestas. Usa o método da classe pai
+    this.adicionarNovaAresta(
+      new ArestaComPeso({ de: indexDe, para: indexPara, peso })
+    );
   }
 
   // Obtém o peso de uma aresta entre dois vértices
@@ -54,6 +54,19 @@ export class GrafoComPeso<V> extends Grafo<V> {
   }
 
   // Obtém os vizinhos de um vértice com os pesos
+  obterVizinhosDoVerticeComPesos(
+    vertice: V
+  ): Array<{ vertice: V; peso: number }> {
+    const index = this.vertices.indexOf(vertice);
+
+    if (index === -1) {
+      throw new Error("Vértice não encontrado");
+    }
+
+    return this.obterVizinhosDoVerticePorIndiceComPesos(index);
+  }
+
+  // Obtém os vizinhos de um vértice com os pesos
   obterVizinhosDoVerticePorIndiceComPesos(
     index: number
   ): Array<{ vertice: V; peso: number }> {
@@ -69,19 +82,6 @@ export class GrafoComPeso<V> extends Grafo<V> {
           };
         })
     );
-  }
-
-  // Obtém os vizinhos de um vértice com os pesos
-  obterVizinhosDoVerticeComPesos(
-    vertice: V
-  ): Array<{ vertice: V; peso: number }> {
-    const index = this.vertices.indexOf(vertice);
-
-    if (index === -1) {
-      throw new Error("Vértice não encontrado");
-    }
-
-    return this.obterVizinhosDoVerticePorIndiceComPesos(index);
   }
 
   // Algoritmo de Dijkstra para encontrar o menor caminho entre dois vértices

@@ -60,6 +60,18 @@ export class Grafo<V> {
     this.adicionarArestaUsandoIndices(i, j); // Adiciona a aresta ao grafo
   }
 
+  // Adiciona uma nova aresta ao grafo. Recebe os índices dos vértices de origem e destino.
+  protected adicionarArestaUsandoIndices(
+    indexDe: number,
+    indexPara: number
+  ): void {
+    this.adicionarNovaAresta(new Aresta({ de: indexDe, para: indexPara }));
+  }
+  /** Estamos chamando uma função dentro de outra função.
+   * Isso pode parecer estranho, mas é uma prática comum em programação.
+   * Pois, ao chamar uma função dentro de outra função, estamos dividindo o código em partes menores e mais fáceis de entender.
+   */
+
   // Adiciona uma nova aresta ao grafo. Recebe um objeto Aresta e adiciona a aresta ao vértice de origem e ao vértice de destino.
   adicionarNovaAresta(a: Aresta): void {
     // Verificar se já existe ligação entre os vértices. Se sim, não adiciona a aresta.
@@ -79,28 +91,6 @@ export class Grafo<V> {
      */
   }
 
-  // Adiciona uma nova aresta ao grafo. Recebe os índices dos vértices de origem e destino.
-  protected adicionarArestaUsandoIndices(
-    indexDe: number,
-    indexPara: number
-  ): void {
-    this.adicionarNovaAresta(new Aresta({ de: indexDe, para: indexPara }));
-  }
-  /** Estamos chamando uma função dentro de outra função.
-   * Isso pode parecer estranho, mas é uma prática comum em programação.
-   * Pois, ao chamar uma função dentro de outra função, estamos dividindo o código em partes menores e mais fáceis de entender.
-   */
-
-  // Retorna o vértice de um índice específico.
-  obterVerticePorIndice(i: number): V {
-    return this.vertices[i];
-  }
-
-  // Retorna o índice de um vértice específico.
-  obterIndiceDoVertice(v: V): number {
-    return this.vertices.indexOf(v);
-  }
-
   // Retorna os vizinhos de um vértice específico, dado o índice do vértice.
   obterVizinhosDoVerticePorIndice(index: number): Array<V> {
     return this.arestas[index].map((aresta) => {
@@ -108,11 +98,21 @@ export class Grafo<V> {
     });
   }
 
+  // Retorna o vértice de um índice específico.
+  obterVerticePorIndice(i: number): V {
+    return this.vertices[i];
+  }
+
   // Retorna os vizinhos de um vértice específico, dado o vértice.
   obterVizinhosDoVertice(v: V): Array<V> {
     const index = this.obterIndiceDoVertice(v); // Encontra o índice do vértice
 
     return this.obterVizinhosDoVerticePorIndice(index); // Retorna os vizinhos do vértice
+  }
+
+  // Retorna o índice de um vértice específico.
+  obterIndiceDoVertice(v: V): number {
+    return this.vertices.indexOf(v);
   }
 
   // Retorna as arestas conectadas a um vértice específico, dado o índice do vértice.
