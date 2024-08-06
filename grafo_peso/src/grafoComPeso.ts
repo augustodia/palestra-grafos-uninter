@@ -89,12 +89,12 @@ export class GrafoComPeso<V> extends Grafo<V> {
       throw new Error("Vértice não encontrado");
     }
 
-    // Inicializa um vetor com as distâncias dos vértices ao vértice de início
+    // Inicializa um array com as distâncias dos vértices ao vértice de início. Infinity para todos
     const distancias = this.vertices.map(() => Infinity);
     // A distância do vértice de início a ele mesmo é 0
     distancias[inicioIndex] = 0;
 
-    // Inicializa um vetor para rastrear os vértices anteriores
+    // Inicializa um array para rastrear os vértices anteriores
     const anteriores = this.vertices.map(() => -1);
 
     // Inicializa um conjunto com os vértices visitados
@@ -111,10 +111,6 @@ export class GrafoComPeso<V> extends Grafo<V> {
       // Adiciona o vértice atual ao conjunto de visitados
       visitados.add(verticeAtual);
 
-      if (distancias[verticeAtual] === Infinity) {
-        break;
-      }
-
       // Pega os vizinhos do vértice atual com os pesos
       const vizinhos =
         this.obterVizinhosDoVerticePorIndiceComPesos(verticeAtual);
@@ -124,7 +120,7 @@ export class GrafoComPeso<V> extends Grafo<V> {
         // Calcula a distância do vértice de início ao vizinho
         const distancia = distancias[verticeAtual] + vizinho.peso;
 
-        // Se a distância for menor que a distância atual, atualiza a distância e o vértice anterior
+        // Se a distância for menor que a distância atual do vizinho
         if (distancia < distancias[indiceVizinho]) {
           distancias[indiceVizinho] = distancia;
           anteriores[indiceVizinho] = verticeAtual;
@@ -143,16 +139,16 @@ export class GrafoComPeso<V> extends Grafo<V> {
    * naquele momento, sem se importar com o futuro.
    */
   obterVerticeComMenorDistancia(
-    vertices: Array<number>,
+    distancias: Array<number>,
     visitados: Set<number>
   ): number {
     let menor = Infinity; // Inicializa a menor distância com infinito
     let menorIndex = -1; // Inicializa o índice do vértice com a menor distância
 
-    for (let i = 0; i < vertices.length; i++) {
+    for (let i = 0; i < distancias.length; i++) {
       // Se a distância do vértice i for menor que a menor distância e o vértice não foi visitado
-      if (vertices[i] < menor && !visitados.has(i)) {
-        menor = vertices[i]; // Atualiza a menor distância
+      if (distancias[i] < menor && !visitados.has(i)) {
+        menor = distancias[i]; // Atualiza a menor distância
         menorIndex = i; // Atualiza o índice do vértice com a menor distância
       }
     }
@@ -176,7 +172,9 @@ export class GrafoComPeso<V> extends Grafo<V> {
     // Constrói o caminho do fim ao início
     while (verticeAtual !== -1) {
       caminho.unshift(this.vertices[verticeAtual]); // Adiciona o vértice atual ao início do caminho
+
       if (verticeAtual === inicio) break; // Se o vértice atual for o vértice de início, para
+
       verticeAtual = anteriores[verticeAtual]; // Atualiza o vértice atual para o anterior
     }
 

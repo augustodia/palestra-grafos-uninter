@@ -376,4 +376,4 @@ function desenhaPesos() {
 }
 
 // Exemplo de uso da função com animação
-irAteComAnimacao("Rio Grande do Sul|RS", "Paraíba|PB");
+irAteComAnimacao("Rio Grande do Sul|RS", "Goiás|GO");
