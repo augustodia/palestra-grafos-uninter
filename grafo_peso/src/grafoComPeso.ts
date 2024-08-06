@@ -71,17 +71,12 @@ export class GrafoComPeso<V> extends Grafo<V> {
     index: number
   ): Array<{ vertice: V; peso: number }> {
     // Retorna uma cópia das arestas do vértice, convertendo para o tipo desejado
-    return (
-      this.arestas[index]
-
-        // .sort((a, b) => a.para - b.para) // Ordena as arestas por ordem crescente.
-        .map((aresta) => {
-          return {
-            vertice: this.obterVerticePorIndice(aresta.para),
-            peso: aresta.peso,
-          };
-        })
-    );
+    return this.arestas[index].map((aresta) => {
+      return {
+        vertice: this.obterVerticePorIndice(aresta.para),
+        peso: aresta.peso,
+      };
+    });
   }
 
   // Algoritmo de Dijkstra para encontrar o menor caminho entre dois vértices
@@ -95,9 +90,12 @@ export class GrafoComPeso<V> extends Grafo<V> {
     }
 
     // Inicializa um vetor com as distâncias dos vértices ao vértice de início
-    const verticesPercorridos = this.vertices.map(() => Infinity);
+    const distancias = this.vertices.map(() => Infinity);
     // A distância do vértice de início a ele mesmo é 0
-    verticesPercorridos[inicioIndex] = 0;
+    distancias[inicioIndex] = 0;
+
+    // Inicializa um vetor para rastrear os vértices anteriores
+    const anteriores = this.vertices.map(() => -1);
 
     // Inicializa um conjunto com os vértices visitados
     const visitados = new Set<number>();
@@ -106,12 +104,16 @@ export class GrafoComPeso<V> extends Grafo<V> {
     while (visitados.size < this.vertices.length) {
       // Obtém o vértice não visitado com a menor distância
       const verticeAtual = this.obterVerticeComMenorDistancia(
-        verticesPercorridos,
+        distancias,
         visitados
       );
 
       // Adiciona o vértice atual ao conjunto de visitados
       visitados.add(verticeAtual);
+
+      if (distancias[verticeAtual] === Infinity) {
+        break;
+      }
 
       // Pega os vizinhos do vértice atual com os pesos
       const vizinhos =
@@ -120,17 +122,18 @@ export class GrafoComPeso<V> extends Grafo<V> {
       for (const vizinho of vizinhos) {
         const indiceVizinho = this.vertices.indexOf(vizinho.vertice);
         // Calcula a distância do vértice de início ao vizinho
-        const distancia = verticesPercorridos[verticeAtual] + vizinho.peso;
+        const distancia = distancias[verticeAtual] + vizinho.peso;
 
-        // Se a distância for menor que a distância atual, atualiza a distância, pois encontrou um caminho menor
-        if (distancia < verticesPercorridos[indiceVizinho]) {
-          verticesPercorridos[indiceVizinho] = distancia;
+        // Se a distância for menor que a distância atual, atualiza a distância e o vértice anterior
+        if (distancia < distancias[indiceVizinho]) {
+          distancias[indiceVizinho] = distancia;
+          anteriores[indiceVizinho] = verticeAtual;
         }
       }
     }
 
     // Retorna o caminho do vértice de início ao vértice de fim
-    return this.obterCaminho(verticesPercorridos, inicioIndex, fimIndex);
+    return this.obterCaminho(anteriores, inicioIndex, fimIndex);
   }
 
   /**
@@ -157,59 +160,25 @@ export class GrafoComPeso<V> extends Grafo<V> {
     return menorIndex;
   }
 
-  obterCaminho(vertices: Array<number>, inicio: number, fim: number): Array<V> {
+  obterCaminho(
+    anteriores: Array<number>,
+    inicio: number,
+    fim: number
+  ): Array<V> {
     const caminho: Array<V> = []; // Inicializa o caminho
     let verticeAtual = fim; // Inicializa o vértice atual com o vértice de fim
 
     // Verifica se há um caminho válido até o vértice inicial
-    if (vertices[fim] === Infinity) {
+    if (anteriores[verticeAtual] === -1 && verticeAtual !== inicio) {
       throw new Error("Caminho não encontrado");
     }
 
     // Constrói o caminho do fim ao início
-    while (verticeAtual !== inicio) {
+    while (verticeAtual !== -1) {
       caminho.unshift(this.vertices[verticeAtual]); // Adiciona o vértice atual ao início do caminho
-
-      // Pega os vizinhos do vértice atual com os pesos
-      const vizinhos =
-        this.obterVizinhosDoVerticePorIndiceComPesos(verticeAtual);
-
-      let menorDistancia = Infinity; // Inicializa a menor distância com infinito
-      let proximoVertice = -1; // Inicializa o próximo vértice com -1q
-
-      // Para cada vizinho do vértice atual
-      for (const vizinho of vizinhos) {
-        // Obtém o índice do vizinho
-        const indiceVizinho = this.vertices.indexOf(vizinho.vertice);
-        // Calcula a distância do vértice atual ao vizinho
-        const distancia = vertices[indiceVizinho] + vizinho.peso;
-
-        // Se a distância for menor que a menor distância, atualiza a menor distância e o próximo vértice
-
-        /** Mostrando um exemplo para entender melhor:
-         * Suponha que estamos no vértice 1 e temos os vizinhos 2 e 3
-         * A distância do vértice 1 ao vértice 2 é 5 e a distância do vértice 1 ao vértice 3 é 3
-         * A distância do vértice 2 ao vértice 3 é 1
-         * Se a distância do vértice 1 ao vértice 2 é 5 e a distância do vértice 2 ao vértice 3 é 1
-         * A distância do vértice 1 ao vértice 3 é 6
-         * Portanto, o próximo vértice é o vértice 3
-         * Se a distância do vértice 1 ao vértice 3 é 3, o próximo vértice é o vértice 2
-         * O algoritmo escolhe o caminho com a menor distância
-         */
-        if (distancia < menorDistancia) {
-          menorDistancia = distancia;
-          proximoVertice = indiceVizinho;
-        }
-      }
-
-      if (proximoVertice === -1) {
-        throw new Error("Caminho não encontrado");
-      }
-
-      verticeAtual = proximoVertice;
+      if (verticeAtual === inicio) break; // Se o vértice atual for o vértice de início, para
+      verticeAtual = anteriores[verticeAtual]; // Atualiza o vértice atual para o anterior
     }
-
-    caminho.unshift(this.vertices[inicio]);
 
     return caminho;
   }
@@ -227,54 +196,162 @@ export class GrafoComPeso<V> extends Grafo<V> {
 
 // Exemplo de uso com estados brasileiros
 const estados = [
-  "Rio Grande do Sul",
-  "Santa Catarina",
-  "Paraná",
-  "São Paulo",
-  "Rio de Janeiro",
-  "Espírito Santo",
-  "Goiás",
-  "Minas Gerais",
-  "Mato Grosso",
-  "Mato Grosso do Sul",
+  { nome: "Rio Grande do Sul|RS", x: 0.4, y: 0.9 },
+  { nome: "Santa Catarina|SC", x: 0.43, y: 0.8 },
+  { nome: "Paraná|PR", x: 0.42, y: 0.7 },
+  { nome: "São Paulo|SP", x: 0.5, y: 0.64 },
+  { nome: "Rio de Janeiro|RJ", x: 0.6, y: 0.6 },
+  { nome: "Espírito Santo|ES", x: 0.7, y: 0.5 },
+  { nome: "Goiás|GO", x: 0.5, y: 0.45 },
+  { nome: "Minas Gerais|MG", x: 0.6, y: 0.48 },
+  { nome: "Mato Grosso|MT", x: 0.35, y: 0.4 },
+  { nome: "Mato Grosso do Sul|MS", x: 0.35, y: 0.6 },
+  { nome: "Rondônia|RO", x: 0.25, y: 0.38 },
+  { nome: "Acre|AC", x: 0.2, y: 0.35 },
+  { nome: "Amazonas|AM", x: 0.3, y: 0.2 },
+  { nome: "Roraima|RR", x: 0.35, y: 0.1 },
+  { nome: "Pará|PA", x: 0.45, y: 0.2 },
+  { nome: "Amapá|AP", x: 0.5, y: 0.1 },
+  { nome: "Tocantins|TO", x: 0.5, y: 0.3 },
+  { nome: "Maranhão|MA", x: 0.6, y: 0.2 },
+  { nome: "Piauí|PI", x: 0.65, y: 0.25 },
+  { nome: "Ceará|CE", x: 0.7, y: 0.2 },
+  { nome: "Rio Grande do Norte|RN", x: 0.75, y: 0.22 },
+  { nome: "Paraíba|PB", x: 0.75, y: 0.25 },
+  { nome: "Pernambuco|PE", x: 0.74, y: 0.3 },
+  { nome: "Alagoas|AL", x: 0.77, y: 0.35 },
+  { nome: "Sergipe|SE", x: 0.73, y: 0.4 },
+  { nome: "Bahia|BA", x: 0.6, y: 0.37 },
 ];
 
-const grafo = new GrafoComPeso<string>(estados);
+const grafo = new GrafoComPeso(estados.map((estado) => estado.nome));
 
-// Fronteiras reais entre os estados com pesos 1
+// Fronteiras reais entre os estados
 grafo.adicionarArestaUsandoVerticesComPeso(
-  "Rio Grande do Sul",
-  "Santa Catarina",
-  1
-);
-grafo.adicionarArestaUsandoVerticesComPeso("Santa Catarina", "Paraná", 1);
-grafo.adicionarArestaUsandoVerticesComPeso("Paraná", "São Paulo", 1);
-grafo.adicionarArestaUsandoVerticesComPeso(
-  "São Paulo",
-  "Mato Grosso do Sul",
-  1
-);
-grafo.adicionarArestaUsandoVerticesComPeso("São Paulo", "Goiás", 1);
-grafo.adicionarArestaUsandoVerticesComPeso("São Paulo", "Minas Gerais", 1);
-grafo.adicionarArestaUsandoVerticesComPeso("Rio de Janeiro", "Minas Gerais", 1);
-grafo.adicionarArestaUsandoVerticesComPeso(
-  "Rio de Janeiro",
-  "Espírito Santo",
-  1
-);
-grafo.adicionarArestaUsandoVerticesComPeso("Espírito Santo", "Minas Gerais", 1);
-grafo.adicionarArestaUsandoVerticesComPeso(
-  "Minas Gerais",
-  "Mato Grosso do Sul",
-  1
-);
-grafo.adicionarArestaUsandoVerticesComPeso("Minas Gerais", "Goiás", 1);
-grafo.adicionarArestaUsandoVerticesComPeso("Goiás", "Mato Grosso do Sul", 1);
-grafo.adicionarArestaUsandoVerticesComPeso("Goiás", "Mato Grosso", 1);
-grafo.adicionarArestaUsandoVerticesComPeso(
-  "Mato Grosso",
-  "Mato Grosso do Sul",
+  "Rio Grande do Sul|RS",
+  "Santa Catarina|SC",
   1
 );
 
-console.log(grafo.toString());
+grafo.adicionarArestaUsandoVerticesComPeso("Santa Catarina|SC", "Paraná|PR", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso(
+  "Paraná|PR",
+  "Mato Grosso do Sul|MS",
+  5
+);
+grafo.adicionarArestaUsandoVerticesComPeso("Paraná|PR", "São Paulo|SP", 2);
+
+grafo.adicionarArestaUsandoVerticesComPeso(
+  "São Paulo|SP",
+  "Mato Grosso do Sul|MS",
+  3
+);
+grafo.adicionarArestaUsandoVerticesComPeso(
+  "São Paulo|SP",
+  "Minas Gerais|MG",
+  3
+);
+grafo.adicionarArestaUsandoVerticesComPeso(
+  "São Paulo|SP",
+  "Rio de Janeiro|RJ",
+  1
+);
+
+grafo.adicionarArestaUsandoVerticesComPeso(
+  "Rio de Janeiro|RJ",
+  "Minas Gerais|MG",
+  1
+);
+grafo.adicionarArestaUsandoVerticesComPeso(
+  "Rio de Janeiro|RJ",
+  "Espírito Santo|ES",
+  1
+);
+
+grafo.adicionarArestaUsandoVerticesComPeso(
+  "Espírito Santo|ES",
+  "Minas Gerais|MG",
+  1
+);
+
+grafo.adicionarArestaUsandoVerticesComPeso(
+  "Minas Gerais|MG",
+  "Mato Grosso do Sul|MS",
+  1
+);
+grafo.adicionarArestaUsandoVerticesComPeso("Minas Gerais|MG", "Goiás|GO", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso(
+  "Goiás|GO",
+  "Mato Grosso do Sul|MS",
+  1
+);
+grafo.adicionarArestaUsandoVerticesComPeso("Goiás|GO", "Mato Grosso|MT", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso(
+  "Mato Grosso|MT",
+  "Mato Grosso do Sul|MS",
+  1
+);
+grafo.adicionarArestaUsandoVerticesComPeso("Mato Grosso|MT", "Rondônia|RO", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Mato Grosso|MT", "Pará|PA", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Mato Grosso|MT", "Amazonas|AM", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso("Rondônia|RO", "Acre|AC", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Rondônia|RO", "Amazonas|AM", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso("Acre|AC", "Amazonas|AM", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso("Amazonas|AM", "Roraima|RR", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Amazonas|AM", "Pará|PA", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso("Roraima|RR", "Pará|PA", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso("Pará|PA", "Amapá|AP", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Pará|PA", "Tocantins|TO", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Pará|PA", "Maranhão|MA", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Pará|PA", "Mato Grosso|MT", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso("Tocantins|TO", "Maranhão|MA", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Tocantins|TO", "Piauí|PI", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Tocantins|TO", "Bahia|BA", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Tocantins|TO", "Mato Grosso|MT", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Tocantins|TO", "Goiás|GO", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso("Maranhão|MA", "Piauí|PI", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso("Piauí|PI", "Ceará|CE", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Piauí|PI", "Bahia|BA", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Piauí|PI", "Pernambuco|PE", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso(
+  "Ceará|CE",
+  "Rio Grande do Norte|RN",
+  1
+);
+grafo.adicionarArestaUsandoVerticesComPeso("Ceará|CE", "Paraíba|PB", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Ceará|CE", "Pernambuco|PE", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso(
+  "Rio Grande do Norte|RN",
+  "Paraíba|PB",
+  1
+);
+
+grafo.adicionarArestaUsandoVerticesComPeso("Paraíba|PB", "Pernambuco|PE", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso("Pernambuco|PE", "Alagoas|AL", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Pernambuco|PE", "Bahia|BA", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso("Alagoas|AL", "Sergipe|SE", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Alagoas|AL", "Bahia|BA", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso("Sergipe|SE", "Bahia|BA", 1);
+
+grafo.adicionarArestaUsandoVerticesComPeso("Bahia|BA", "Espírito Santo|ES", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Bahia|BA", "Minas Gerais|MG", 1);
+grafo.adicionarArestaUsandoVerticesComPeso("Bahia|BA", "Goiás|GO", 1);
+
+const menorCaminho = grafo.irAte("Santa Catarina|SC", "Paraíba|PB");
+console.log(`Menor caminho: ${menorCaminho.join(" -> ")}`);

@@ -175,7 +175,7 @@ console.log(grafo.toString());
 function desenhaEtapa(
   verticeAtual: string,
   visitados: Set<number>,
-  fim: boolean = false
+  fim = false
 ) {
   desenhaGrafo();
   const index = grafo.obterIndiceDoVertice(verticeAtual);
@@ -183,12 +183,14 @@ function desenhaEtapa(
   const x = vertice.x * canvas.width;
   const y = vertice.y * canvas.height;
 
+  // Desenhar o vértice atual em vermelho
   ctx.beginPath();
   ctx.arc(x, y, 10, 0, 2 * Math.PI);
   ctx.fillStyle = "#FF0000";
   ctx.fill();
   ctx.closePath();
 
+  // Desenhar os vértices visitados em verde
   visitados.forEach((index) => {
     const vertice = estados[index];
     const x = vertice.x * canvas.width;
@@ -207,12 +209,13 @@ function desenhaEtapa(
   ctx.font = "16px Arial";
   ctx.fillText(`Vértice Atual: ${verticeAtual}`, 20, canvas.height - 40);
   ctx.fillText(`Visitados: ${visitados.size}`, 20, canvas.height - 20);
+
   if (fim) {
     return;
   }
 
+  // Desenhar arestas para os vizinhos
   const vizinhos = grafo.obterVizinhosDoVerticePorIndiceComPesos(index);
-
   for (const vizinho of vizinhos) {
     const vizinhoIndex = grafo.obterIndiceDoVertice(vizinho.vertice);
     const vizinhoVertice = estados[vizinhoIndex];
@@ -299,62 +302,60 @@ function irAteComAnimacao(origem: string, destino: string) {
     return;
   }
 
-  const verticesPercorridos = grafo.vertices.map(() => Infinity);
-  verticesPercorridos[inicioIndex] = 0;
+  const distancias = grafo.vertices.map(() => Infinity);
+  distancias[inicioIndex] = 0;
 
+  const anteriores = grafo.vertices.map(() => -1);
   const visitados = new Set<number>();
 
-  function processaProximaEtapa(
-    verticesPercorridos: number[],
-    origem: number,
-    destino: number
-  ) {
+  function processaProximaEtapa() {
     if (visitados.size >= grafo.obterNumeroDeVertices()) {
-      const verticeAtual = grafo.obterVerticePorIndice(destino);
-      desenhaEtapa(verticeAtual, visitados, true);
-      const caminho = grafo.obterCaminho(verticesPercorridos, origem, destino);
+      const caminho = [];
+      let atual = fimIndex;
+      while (atual !== -1) {
+        caminho.unshift(grafo.obterVerticePorIndice(atual));
+        atual = anteriores[atual];
+      }
+
+      desenhaEtapa(grafo.obterVerticePorIndice(fimIndex), visitados, true);
       desenhaCaminhoFinal(caminho);
 
       return;
     }
 
-    const indexVerticeAtual = grafo.obterVerticeComMenorDistancia(
-      verticesPercorridos,
+    const verticeAtualIndex = grafo.obterVerticeComMenorDistancia(
+      distancias,
       visitados
     );
 
-    const verticeAtual = grafo.obterVerticePorIndice(indexVerticeAtual);
+    if (distancias[verticeAtualIndex] === Infinity) {
+      return;
+    }
 
-    visitados.add(indexVerticeAtual);
-
+    const verticeAtual = grafo.obterVerticePorIndice(verticeAtualIndex);
+    visitados.add(verticeAtualIndex);
     desenhaEtapa(verticeAtual, visitados);
 
     const vizinhos =
-      grafo.obterVizinhosDoVerticePorIndiceComPesos(indexVerticeAtual);
+      grafo.obterVizinhosDoVerticePorIndiceComPesos(verticeAtualIndex);
 
     for (const vizinho of vizinhos) {
-      const indiceVizinho = grafo.obterIndiceDoVertice(vizinho.vertice);
-      const distancia = verticesPercorridos[indexVerticeAtual] + vizinho.peso;
+      const vizinhoIndex = grafo.obterIndiceDoVertice(vizinho.vertice);
+      const novaDistancia = distancias[verticeAtualIndex] + vizinho.peso;
 
-      if (distancia < verticesPercorridos[indiceVizinho]) {
-        verticesPercorridos[indiceVizinho] = distancia;
+      if (novaDistancia < distancias[vizinhoIndex]) {
+        distancias[vizinhoIndex] = novaDistancia;
+        anteriores[vizinhoIndex] = verticeAtualIndex;
       }
     }
 
-    setTimeout(() => {
-      processaProximaEtapa(verticesPercorridos, origem, destino);
-    }, 300);
+    setTimeout(processaProximaEtapa, 300);
   }
 
-  processaProximaEtapa(verticesPercorridos, inicioIndex, fimIndex);
+  processaProximaEtapa();
 }
 
-const caminho = grafo.irAte("Rio Grande do Sul|RS", "Minas Gerais|MG");
-
-console.log(caminho);
-
-irAteComAnimacao("Rio Grande do Sul|RS", "Paraíba|PB");
-
+// Função para desenhar os pesos
 function desenhaPesos() {
   for (let i = 0; i < grafo.obterNumeroDeVertices(); i++) {
     const vertice = estados[i];
@@ -367,17 +368,17 @@ function desenhaPesos() {
       const vizinhoX = vizinhoVertice.x * canvas.width;
       const vizinhoY = vizinhoVertice.y * canvas.height;
 
-      // Calcula a posição média para o texto do peso
       const meioX = (x + vizinhoX) / 2;
       const meioY = (y + vizinhoY) / 2;
 
       if (vertice.nome !== vizinho) {
         const peso = grafo.obterPesoDaAresta(vertice.nome, vizinho);
-        // Desenha o peso na aresta
-        ctx.fillText(peso.toString(), meioX, meioY);
-        //Cor do texto
         ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+        ctx.fillText(peso.toString(), meioX, meioY);
       }
     });
   }
 }
+
+// Exemplo de uso da função com animação
+irAteComAnimacao("Santa Catarina|SC", "Paraíba|PB");
