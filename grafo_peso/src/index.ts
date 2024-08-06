@@ -310,15 +310,10 @@ function irAteComAnimacao(origem: string, destino: string) {
 
   function processaProximaEtapa() {
     if (visitados.size >= grafo.obterNumeroDeVertices()) {
-      const caminho = [];
-      let atual = fimIndex;
-      while (atual !== -1) {
-        caminho.unshift(grafo.obterVerticePorIndice(atual));
-        atual = anteriores[atual];
-      }
-
       desenhaEtapa(grafo.obterVerticePorIndice(fimIndex), visitados, true);
-      desenhaCaminhoFinal(caminho);
+      desenhaCaminhoFinal(
+        grafo.obterCaminho(anteriores, inicioIndex, fimIndex)
+      );
 
       return;
     }
@@ -381,4 +376,4 @@ function desenhaPesos() {
 }
 
 // Exemplo de uso da função com animação
-irAteComAnimacao("Santa Catarina|SC", "Paraíba|PB");
+irAteComAnimacao("Rio Grande do Sul|RS", "Paraíba|PB");
