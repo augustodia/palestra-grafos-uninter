@@ -1,15 +1,12 @@
 import { GrafoComPeso } from "./grafoComPeso";
+import {
+  initializeCanvas,
+  drawGraph,
+  drawPath,
+} from "./canvasUtils";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-canvas.width = canvas!.clientWidth;
-canvas.height = canvas!.clientHeight;
-window.addEventListener("resize", () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  // Redesenhe o grafo
-  desenhaGrafo();
-});
+initializeCanvas(canvas);
 const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
 const estados = [
@@ -172,6 +169,10 @@ grafo.adicionarArestaUsandoVerticesComPeso("Bahia|BA", "Goiás|GO", 1);
 
 console.log(grafo.toString());
 
+function desenhaGrafo() {
+  drawGraph(ctx, grafo, estados);
+}
+
 function desenhaEtapa(
   verticeAtual: string,
   visitados: Set<number>,
@@ -232,65 +233,7 @@ function desenhaEtapa(
 }
 
 function desenhaCaminhoFinal(caminho: string[]) {
-  for (let i = 0; i < caminho.length - 1; i++) {
-    const origem = estados.find((estado) => estado.nome === caminho[i]);
-    const destino = estados.find((estado) => estado.nome === caminho[i + 1]);
-
-    if (origem && destino) {
-      const origemX = origem.x * canvas.width;
-      const origemY = origem.y * canvas.height;
-      const destinoX = destino.x * canvas.width;
-      const destinoY = destino.y * canvas.height;
-
-      ctx.beginPath();
-      ctx.moveTo(origemX, origemY);
-      ctx.lineTo(destinoX, destinoY);
-      ctx.strokeStyle = "red";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-    }
-  }
-}
-
-function desenhaGrafo() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Desenhe todas as arestas
-  for (let i = 0; i < grafo.obterNumeroDeVertices(); i++) {
-    const vertice = estados[i];
-    const x = vertice.x * canvas.width;
-    const y = vertice.y * canvas.height;
-
-    const vizinhos = grafo.obterVizinhosDoVerticePorIndice(i);
-    vizinhos.forEach((vizinho) => {
-      const vizinhoVertice = estados[grafo.obterIndiceDoVertice(vizinho)];
-      const vizinhoX = vizinhoVertice.x * canvas.width;
-      const vizinhoY = vizinhoVertice.y * canvas.height;
-
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(vizinhoX, vizinhoY);
-      ctx.strokeStyle = "#CCCCCC";
-      ctx.stroke();
-    });
-  }
-
-  // Desenhe todos os vértices
-  for (let i = 0; i < grafo.obterNumeroDeVertices(); i++) {
-    const vertice = estados[i];
-    const x = vertice.x * canvas.width;
-    const y = vertice.y * canvas.height;
-
-    ctx.beginPath();
-    ctx.arc(x, y, 10, 0, 2 * Math.PI);
-    ctx.fillStyle = "blue";
-    ctx.fill();
-
-    ctx.fillStyle = "black";
-    ctx.font = "16px Arial";
-    const sigla = grafo.obterVerticePorIndice(i).split("|")[1];
-    ctx.fillText(sigla, x + 20, y);
-  }
+  drawPath(ctx, caminho, estados);
 }
 
 function irAteComAnimacao(origem: string, destino: string) {
@@ -360,8 +303,8 @@ function desenhaPesos() {
     const vizinhos = grafo.obterVizinhosDoVerticePorIndice(i);
     vizinhos.forEach((vizinho) => {
       const vizinhoVertice = estados[grafo.obterIndiceDoVertice(vizinho)];
-      const vizinhoX = vizinhoVertice.x * canvas.width;
-      const vizinhoY = vizinhoVertice.y * canvas.height;
+      const vizinhoX = vizinhoVertice.x * ctx.canvas.width;
+      const vizinhoY = vizinhoVertice.y * ctx.canvas.height;
 
       const meioX = (x + vizinhoX) / 2;
       const meioY = (y + vizinhoY) / 2;
